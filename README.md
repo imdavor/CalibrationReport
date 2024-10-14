@@ -1,5 +1,10 @@
 # CalibrationReport
 Calibration Report za mikroskope
 
-1. otvori csv file (exportirani)
-2. 
+SUČELJE:
+1. gumb - otvori/učitaj csv file (exportiran iz SWa)
+2. gumb - napravi report
+
+
+FUNKCIJE
+1.
