@@ -9,16 +9,13 @@ file_path = ''
 
 
 def open_file():
-    global file_path
     file_path = filedialog.askopenfilename(filetypes=[("CSV files", "*.csv")])
     if file_path:
         print(f"Selected file: {file_path}")
+        create_report(file_path)
 
 
-def create_report():
-    if not file_path:
-        print("No file selected!")
-        return
+def create_report(file_path):
     # Create a new window for the report
     report_window = tk.Toplevel(root)
     report_window.title("Report")
@@ -44,28 +41,26 @@ def create_report():
     # Read data from CSV file and insert into the treeview
     with open(file_path, newline='', encoding='utf-16') as csvfile:
         reader = csv.DictReader(csvfile)
-        # Print column names to debug
-        print("Column names:", reader.fieldnames)
+
         for row in reader:
             tree.insert("", tk.END, values=(
                 row['Name'], row['X/r'], row['Y/a'], row['Z'], row['R'], row['D'], row['L'], row['W'], row['A'],
-                row['f'], row['When']))
+                row['f'], row['When']
+            ))
 
     # Pack the treeview widget
     tree.pack(padx=10, pady=10)
 
     # Add Print and Close buttons to the report window
-    print_button = tk.Button(report_window, text="Print", command=print_report)
+    print_button = tk.Button(report_window, text="Print", command=lambda: print_report(file_path))
     close_button = tk.Button(report_window, text="Zatvori", command=report_window.destroy)
-
     print_button.pack(pady=5)
     close_button.pack(pady=5)
 
 
-def print_report():
+def print_report(file_path, max_widths=None):
     # Specify the PDF file name
     pdf_file = filedialog.asksaveasfilename(defaultextension=".pdf", filetypes=[("PDF files", "*.pdf")])
-
     if not pdf_file:
         return  # If the user cancels the save dialog
 
@@ -87,15 +82,25 @@ def print_report():
     headers = ["Point", "X/r", "Y/a", "Z", "R", "D", "L", "W", "A", "f", "When"]
     c.setFont("Helvetica-Bold", 12)
     for i, header in enumerate(headers):
-        c.drawString(x_offset + i * 60, y_offset, header)
+        c.drawString(x_offset + sum(max_widths[:i]), y_offset, header)
     y_offset -= line_height  # Move down for the rows
 
-    # Write the data from Treeview
+    # Measure and adjust column widths
+    max_widths = [0] * len(headers)
+    for row_id in tree.get_children():
+        row_values = tree.item(row_id)['values']
+        for i, value in enumerate(row_values):
+            max_widths[i] = max(max_widths[i], c.stringWidth(str(value), "Helvetica", 10))
+
+    for i, width in enumerate(max_widths):
+        max_widths[i] = width + 10  # Add some padding
+
+    # Write the data from Treeview with adjusted widths
     c.setFont("Helvetica", 10)
     for row_id in tree.get_children():  # Loop through treeview rows
         row_values = tree.item(row_id)['values']
         for i, value in enumerate(row_values):
-            c.drawString(x_offset + i * 60, y_offset, str(value))
+            c.drawString(x_offset + sum(max_widths[:i]), y_offset, str(value))
         y_offset -= line_height  # Move to the next row
 
         # If we reach the bottom of the page, create a new page
@@ -119,8 +124,8 @@ root.geometry("800x600")
 
 # Create buttons
 open_button = tk.Button(root, text="Otvori datoteku", command=open_file)
-report_button = tk.Button(root, text="Kreiraj report", command=create_report)
-print_button = tk.Button(root, text="Print", command=print_report)
+report_button = tk.Button(root, text="Kreiraj report", command=lambda: create_report(file_path))
+print_button = tk.Button(root, text="Print", command=lambda: print_report(file_path))
 close_button = tk.Button(root, text="Zatvori", command=root.destroy)
 
 # Arrange buttons in the window
