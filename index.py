@@ -1,6 +1,9 @@
 import tkinter as tk
-from tkinter import filedialog, ttk
+from tkinter import filedialog, ttk, messagebox
 import csv
+import os
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
 
 file_path = ''
 
@@ -21,6 +24,7 @@ def create_report():
     report_window.title("Report")
 
     # Create a treeview widget
+    global tree
     tree = ttk.Treeview(report_window, columns=("Point", "X/r", "Y/a", "Z", "R", "D", "L", "W", "A", "f", "When"),
                         show='headings')
 
@@ -44,8 +48,8 @@ def create_report():
         print("Column names:", reader.fieldnames)
         for row in reader:
             tree.insert("", tk.END, values=(
-            row['Name'], row['X/r'], row['Y/a'], row['Z'], row['R'], row['D'], row['L'], row['W'], row['A'], row['f'],
-            row['When']))
+                row['Name'], row['X/r'], row['Y/a'], row['Z'], row['R'], row['D'], row['L'], row['W'], row['A'],
+                row['f'], row['When']))
 
     # Pack the treeview widget
     tree.pack(padx=10, pady=10)
@@ -59,7 +63,51 @@ def create_report():
 
 
 def print_report():
-    print("Printing report...")
+    # Specify the PDF file name
+    pdf_file = filedialog.asksaveasfilename(defaultextension=".pdf", filetypes=[("PDF files", "*.pdf")])
+
+    if not pdf_file:
+        return  # If the user cancels the save dialog
+
+    # Create a PDF canvas
+    c = canvas.Canvas(pdf_file, pagesize=letter)
+    width, height = letter
+
+    # Set initial positions for the content
+    x_offset = 50
+    y_offset = height - 50
+    line_height = 20  # Space between lines
+
+    # Title of the PDF
+    c.setFont("Helvetica-Bold", 14)
+    c.drawString(x_offset, y_offset, "Calibration Report")
+    y_offset -= line_height * 2  # Move down
+
+    # Write column headers
+    headers = ["Point", "X/r", "Y/a", "Z", "R", "D", "L", "W", "A", "f", "When"]
+    c.setFont("Helvetica-Bold", 12)
+    for i, header in enumerate(headers):
+        c.drawString(x_offset + i * 60, y_offset, header)
+    y_offset -= line_height  # Move down for the rows
+
+    # Write the data from Treeview
+    c.setFont("Helvetica", 10)
+    for row_id in tree.get_children():  # Loop through treeview rows
+        row_values = tree.item(row_id)['values']
+        for i, value in enumerate(row_values):
+            c.drawString(x_offset + i * 60, y_offset, str(value))
+        y_offset -= line_height  # Move to the next row
+
+        # If we reach the bottom of the page, create a new page
+        if y_offset < 50:
+            c.showPage()  # Save the current page
+            y_offset = height - 50  # Reset y_offset for the new page
+
+    # Save the PDF file
+    c.save()
+
+    # Notify the user that the PDF has been saved
+    messagebox.showinfo("PDF Saved", f"Report saved as {os.path.basename(pdf_file)}")
 
 
 # Create the main window
