@@ -4,6 +4,7 @@ import csv
 import os
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
+import tkinter.font as tkFont  # Dodaj ovu liniju na početak
 
 file_path = ''
 report_window = None  # Globalna varijabla za prozor izvještaja
@@ -14,12 +15,13 @@ def open_file():
     file_path = filedialog.askopenfilename(filetypes=[("CSV files", "*.csv")])
     if file_path:
         print(f"Odabrana datoteka: {file_path}")
+        filename_label.config(text=f"Datoteka: {os.path.basename(file_path)}")  # Ažuriraj label s imenom datoteke
         if report_window:  # Ako prozor izvještaja već postoji, uništi ga
             report_window.destroy()
         report_button.config(state=tk.NORMAL)  # Omogući gumb za kreiranje izvještaja
 
 
-def create_report(file_path, tkFont=None):
+def create_report(file_path):
     global report_window
     if report_window:
         report_window.destroy()  # Zatvori prethodni prozor ako postoji
@@ -27,12 +29,13 @@ def create_report(file_path, tkFont=None):
     # Kreiraj novi prozor za izvještaj
     report_window = tk.Toplevel(root)
     report_window.title("Izvještaj")
+    report_window.geometry("800x600")  # Postavi početnu veličinu prozora
 
     # Kreiraj treeview widget za prikaz podataka s dodanim scroll barovima
     frame = ttk.Frame(report_window)
     frame.pack(fill=tk.BOTH, expand=True)
 
-    tree = ttk.Treeview(frame, columns=("Point", "X/r", "Y/a", "R", "D", "When"),
+    tree = ttk.Treeview(frame, columns=("Point", "NOMINAL_X", "NOMINAL_Y", "X/r", "Y/a", "R", "D", "When"),
                         show='headings', height=20)
 
     # Dodaj vertikalni i horizontalni scrollbar
@@ -46,11 +49,16 @@ def create_report(file_path, tkFont=None):
 
     # Definiraj zaglavlja stupaca
     tree.heading("Point", text="Point")
+    tree.heading("NOMINAL_X", text="X")
+    tree.heading("NOMINAL_Y", text="Y")
     tree.heading("X/r", text="X/r")
     tree.heading("Y/a", text="Y/a")
     tree.heading("R", text="R")
     tree.heading("D", text="D")
     tree.heading("When", text="When")
+
+    # Povećaj visinu redaka (simuliraj zaglavlje "NOMINAL")
+    tree.insert("", tk.END, values=("NOMINAL", "", "", "", "", ""))  # Dodaj prazan redak s nominalnim zaglavljem
 
     # Čitaj podatke iz CSV datoteke i ubaci ih u treeview
     try:
@@ -68,11 +76,20 @@ def create_report(file_path, tkFont=None):
         return
 
     # Automatski prilagodi širinu stupaca na temelju najdužeg podatka
+    font = tkFont.Font(family="Helvetica", size=10)  # Inicijaliziraj font
     for col in tree['columns']:
-        tree.column(col, width=tkFont.Font().measure(col))
+        tree.column(col, width=font.measure(col))
         for row_id in tree.get_children():
             cell_value = tree.item(row_id)['values'][tree['columns'].index(col)]
-            tree.column(col, width=max(tree.column(col)['width'], tkFont.Font().measure(str(cell_value))))
+            tree.column(col, width=max(tree.column(col)['width'], font.measure(str(cell_value))))
+
+    # Prilagodi visinu prozora ovisno o broju redaka
+    row_height = 25  # Visina jednog retka (ovisno o fontu i widgetu)
+    max_rows_display = 25  # Maksimalan broj redaka za prikaz bez scroll bara
+    displayed_rows = min(row_count, max_rows_display)  # Prikazani redci (maksimalno 20)
+
+    window_height = 150 + (displayed_rows * row_height)  # Ukupna visina prozora (150 je za gornje elemente i gumbiće)
+    report_window.geometry(f"800x{window_height}")  # Postavi visinu prozora
 
     # Dodaj gumbe za Print i Zatvori
     print_button = tk.Button(report_window, text="Print", command=lambda: print_report(tree))
@@ -146,6 +163,10 @@ root.title("Kalibracijski Izvještaj")
 
 # Podesi početnu veličinu
 root.geometry("800x600")
+
+# Label za prikaz imena datoteke
+filename_label = tk.Label(root, text="Nije odabrana datoteka", font=("Helvetica", 12))
+filename_label.pack(pady=10)  # Postavi label u prozor
 
 # Kreiraj gumbe
 open_button = tk.Button(root, text="Otvori datoteku", command=open_file)
