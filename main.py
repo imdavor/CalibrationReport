@@ -69,7 +69,7 @@ class CSVApp:
             if pdf_path:
                 try:
                     # Učitavanje podataka iz grid.txt
-                    grid_data = self.load_grid_data('grid.txt')
+                    grid_data = self.load_grid_data(os.path.join(os.path.dirname(__file__),'grid.txt'))
 
                     # Provjerite da li je grid_data uspješno učitan
                     if grid_data is None:
