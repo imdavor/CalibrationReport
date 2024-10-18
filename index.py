@@ -51,98 +51,61 @@ def create_report(file_path):
     # tree.insert("", tk.END, values=("NOMINAL", "", "", "", "", ""))  # Dodaj prazan redak s nominalnim zaglavljem
 
     # Definiraj zaglavlja stupaca
-    tree.heading("Point", text="Point")
-    tree.heading("NOMINAL_X", text="X")
-    tree.heading("NOMINAL_Y", text="Y")
-    tree.heading("X/r", text="X/r")
-    tree.heading("Y/a", text="Y/a")
-    tree.heading("Actual _X", text="Actual _X")
-    tree.heading("Actual _Y", text="Actual _Y")
-    tree.heading("Error_X", text="Error_X")
-    tree.heading("Error_Y", text="Error_Y")
+    # tree.heading("Point", text="Point")
+    # tree.heading("NOMINAL_X", text="X")
+    # tree.heading("NOMINAL_Y", text="Y")
+    # tree.heading("X/r", text="X/r")
+    # tree.heading("Y/a", text="Y/a")
+    # tree.heading("Actual _X", text="Actual _X")
+    # tree.heading("Actual _Y", text="Actual _Y")
+    # tree.heading("Error_X", text="Error_X")
+    # tree.heading("Error_Y", text="Error_Y")
     # tree.heading("X", text="X")
     # tree.heading("Y", text="Y")
     # tree.heading("R", text="R")
     # tree.heading("D", text="D")
     # tree.heading("When", text="When")
+    tree.heading("Point", text="Point")
+    tree.heading("NOMINAL_X", text="X")
+    tree.heading("NOMINAL_Y", text="Y")
+    tree.heading("X/r", text="X/r")
+    tree.heading("Y/a", text="Y/a")
+    tree.heading("Error_X", text="Error X")
+    tree.heading("Error_Y", text="Error Y")
+    tree.column("Point", width=100)
+    tree.column("NOMINAL_X", width=100)
+    tree.column("NOMINAL_Y", width=100)
+    tree.column("X/r", width=100)
+    tree.column("Y/a", width=100)
+    tree.column("Error_X", width=100)
+    tree.column("Error_Y", width=100)
+    
 
-
-
-    x_values = [0.00000,
-28.00000,
-56.00000,
-84.00000,
-112.00000,
-139.99900,
-167.99900,
-195.99900,
-0.00000,
-28.00000,
-56.00000,
-83.99900,
-112.00000,
-139.99900,
-167.99900,
-195.99900,
-0.00100,
-28.00000,
-56.00000,
-84.00000,
-112.00000,
-140.00000,
-168.00000,
-196.00000,
-0.00100,
-28.00000,
-56.00100,
-84.00000,
-112.00100,
-140.00000,
-168.00000,
-196.00000
-
+    x_values = [
+    0.00000, 28.00000, 56.00000, 84.00000, 112.00000, 139.99900, 167.99900, 195.99900,
+    0.00000, 28.00000, 56.00000, 83.99900, 112.00000, 139.99900, 167.99900, 195.99900,
+    0.00100, 28.00000, 56.00000, 84.00000, 112.00000, 140.00000, 168.00000, 196.00000,
+    0.00100, 28.00000, 56.00100, 84.00000, 112.00100, 140.00000, 168.00000, 196.00000
 ]
-    y_values = [0.00000,
-0.00000,
-0.00000,
-0.00000,
-0.00000,
-0.00000,
-0.00000,
-0.00000,
-28.00000,
-28.00000,
-28.00000,
-28.00000,
-28.00000,
-28.00000,
-28.00000,
-28.00000,
-56.00000,
-56.00100,
-56.00000,
-56.00000,
-56.00000,
-56.00000,
-56.00000,
-56.00000,
-84.00000,
-84.00100,
-84.00000,
-84.00000,
-84.00000,
-84.00000,
-84.00000,
-84.00000]
+    y_values = [
+    0.00000, 0.00000, 0.00000, 0.00000, 0.00000, 0.00000, 0.00000, 0.00000,
+    28.00000, 28.00000, 28.00000, 28.00000, 28.00000, 28.00000, 28.00000, 28.00000,
+    56.00000, 56.00100, 56.00000, 56.00000, 56.00000, 56.00000, 56.00000, 56.00000,
+    84.00000, 84.00100, 84.00000, 84.00000, 84.00000, 84.00000, 84.00000, 84.00000
+]
     # Čitaj podatke iz CSV datoteke i ubaci ih u treeview
     try:
         with open(file_path, newline='', encoding='utf-16') as csvfile:
             reader = csv.DictReader(csvfile)
             row_count = 0  # Broji retke
             for row in reader:
+                if 'Name' in row and 'skew' in row['Name'].lower():
+                    continue  # Preskoči red ako sadrži riječ "skew"
+                x_error = float(row['X/r']) - x_values[row_count]
+                y_error = float(row['Y/a']) - y_values[row_count]
                 tree.insert("", tk.END, values=(
-                    row['Name'], x_values[row_count], y_values[row_count],row['X/r'], row['Y/a'],
-                    row['R'], row["D"], row['When']
+                    row['Name'], x_values[row_count], y_values[row_count], row['X/r'], row['Y/a'],
+                    x_error, y_error
                 ))
                 row_count += 1
     except Exception as e:
